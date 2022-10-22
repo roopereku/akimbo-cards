@@ -1,4 +1,5 @@
 #include "CardDeck.hh"
+#include "Overlay.hh"
 #include "Card.hh"
 
 #include <akimbo/Core.hh>
@@ -148,6 +149,11 @@ public:
 			ui.left(50).then(-offset.x + cardSize.x / 2), ui.top(cardSize.y),
 			cardAtlas, Scatter::Horizontally, onClick
 		);
+
+		overlay = &ui.add <Overlay> (
+			ui.left(), ui.top(),
+			ui.right(), ui.bottom()
+		);
 	}
 
 	void onRender(Akimbo::Render& render) override
@@ -165,6 +171,8 @@ private:
 
 	std::function <void(CardDeck&)> onClick;
 	Akimbo::TextureAtlas cardAtlas;
+
+	Overlay* overlay;
 	CardDeck* decks[14];
 };
 
