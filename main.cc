@@ -4,8 +4,6 @@
 
 #include <akimbo/Core.hh>
 
-#include <random>
-
 class Cards : public Akimbo::Core
 {
 public:
@@ -35,55 +33,58 @@ public:
 			if(deck.empty())
 				return card.value == Card::Name::King;
 
-			return card.t == deck.back().t && card.value == deck.back().value - 1;
+			bool sameColor = card.isRed() == deck.back().isRed();
+			return !sameColor && card.value == deck.back().value - 1;
 		}
 	}
 
 	Cards() : cardAtlas("resources/cardatlas.jpg", 13, 5)
 	{
 		cardSize = Card::size() * cardAtlas.getAspectRatio();
-		dealCount = 1;
+		dealCount = 3;
 
-		onClick = [this](CardDeck& deck)
+		onClick = [this](CardDeck& deck, Card* card)
 		{
+			if(selectedCard && (card == selectedCard))
+			{
+				selectedCard->highlighted = false;
+				selected->render();
+
+				selectedCard = nullptr;
+				selected = nullptr;
+
+				return;
+			}
+
 			if(&deck == decks[Deal + 1])
 			{
 				if(selected)
 					return;
 
-				if(decks[Deal + 0]->count() == 3)
-				{
-					while(!decks[Deal + 0]->empty())
-						decks[Deal + 0]->pop();
-				}
+				if(decks[Deal + 1]->count() == 0)
+					decks[Deal + 0]->moveTo(*decks[Deal + 1], decks[Deal + 0]->count(), false, true);
 
-				std::random_device rd;
-				std::mt19937 gen(rd());
-
-				std::uniform_int_distribution <unsigned> distV(Card::Name::Ace, Card::Name::King);
-				std::uniform_int_distribution <unsigned> distT(Card::Type::Hearts, Card::Type::Spades);
-
-				decks[Deal + 0]->add(Card::Type::Spades, distV(gen));
-				//decks[Deal + 0]->add(static_cast <Card::Type> (distT(gen)), Card::Name::Ace);
+				else decks[Deal + 1]->moveTo(*decks[Deal + 0], dealCount, true, true);
 				return;
 			}
 
 			if(selected == nullptr)
 			{
-				if(deck.empty())
+				if(deck.empty() || card == nullptr)
+					return;
+
+				if(card->flipped)
+					return;
+
+				//	Only the last card of the deal deck can be selected
+				if(&deck == decks[Deal + 0] && card != &deck.back())
 					return;
 
 				selected = &deck;
-				selectedCard = &deck.back();
+				selectedCard = card;
 
 				selectedCard->highlighted = true;
 				selectedCard->highlight = Vec3(1.0f, 1.0f, 0.0f);
-			}
-
-			else if(selected == &deck)
-			{
-				selectedCard->highlighted = false;
-				selected = nullptr;
 			}
 
 			else if(&deck != decks[Deal + 0])
@@ -92,11 +93,15 @@ public:
 					return;
 
 				selectedCard->highlighted = false;
-				deck.add(*selectedCard);
+				selected->moveTo(deck, *selectedCard);
 
-				selected->pop();
-				selected->render();
+				if(!selected->empty())
+				{
+					selected->back().flipped = false;
+					selected->render();
+				}
 
+				selectedCard = nullptr;
 				selected = nullptr;
 			}
 		};
@@ -154,6 +159,25 @@ public:
 			ui.left(), ui.top(),
 			ui.right(), ui.bottom()
 		);
+
+		for(int t = Card::Type::Hearts; t <= Card::Type::Spades; t++)
+		{
+			for(int v = Card::Name::Ace; v <= Card::Name::King; v++)
+			{
+				decks[Deal + 1]->add(static_cast <Card::Type> (t), v);
+				decks[Deal + 1]->back().flipped = true;
+			}
+		}
+
+		decks[Deal + 1]->shuffle();
+		decks[Deal + 1]->toggleCount();
+		decks[Deal + 0]->limitVisible(dealCount);
+
+		for(size_t i = 0; i < 7; i++)
+		{
+			decks[Deal + 1]->moveTo(*decks[Field + i], i + 1, true, false);
+			decks[Field + i]->back().flipped = false;
+		}
 	}
 
 	void onRender(Akimbo::Render& render) override
@@ -169,7 +193,7 @@ private:
 	Vec2 cardSize;
 	unsigned dealCount;
 
-	std::function <void(CardDeck&)> onClick;
+	std::function <void(CardDeck&, Card*)> onClick;
 	Akimbo::TextureAtlas cardAtlas;
 
 	Overlay* overlay;

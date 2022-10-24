@@ -26,6 +26,15 @@ struct Card
 	Card() {}
 	Card(Type t, unsigned value) : value(value), t(t) {}
 
+	bool operator==(const Card& rhs)
+	{
+		return value == rhs.value && t == rhs.t;
+	}
+
+	bool isRed() { return t == Type::Diamonds || t == Type::Hearts; }
+	bool isBlack() { return t == Type::Clubs || t == Type::Spades; }
+
+	bool flipped = true;
 	unsigned value;
 	Type t;
 

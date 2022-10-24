@@ -20,7 +20,7 @@ enum class Scatter
 class CardDeck : public Akimbo::UI::Widget
 {
 public:
-	CardDeck(Akimbo::TextureAtlas& atlas, Scatter scatter, std::function <void(CardDeck&)>& onClick)
+	CardDeck(Akimbo::TextureAtlas& atlas, Scatter scatter, std::function <void(CardDeck&, Card*)>& onClick)
 		: scatter(scatter), atlas(atlas), onClick(onClick)
 	{
 		cardSize = Card::size() * atlas.getAspectRatio();
@@ -29,11 +29,19 @@ public:
 	
 	void onRender(Akimbo::Render& render) override;
 	void onMouseClick(Vec2 at, int which) override;
+	void onResize() override;
 
-	void add(Card card);
-	void add(Card::Type t, unsigned value);
+	void toggleCount();
+	void limitVisible(unsigned count);
 
-	Card pop();
+	void moveTo(CardDeck& to, Card& card, bool top = true, bool flip = false);
+	void moveTo(CardDeck& to, size_t count, bool top = true, bool flip = false);
+
+	void add(Card::Type t, unsigned value, bool top = true);
+	void add(Card card, bool top = true);
+
+	void shuffle();
+	void pop();
 
 	bool empty() { return cards.empty(); }
 	size_t count() { return cards.size(); }
@@ -43,13 +51,18 @@ public:
 
 private:
 	void renderCard(Akimbo::Render& render, Card& card, Vec2 position);
+
 	Vec2 cardSize;
+	Vec2 shift;
 
 	Scatter scatter;
 
+	bool displayCount = false;
+	unsigned maxVisible = 0;
+
 	std::deque <Card> cards;
 	Akimbo::TextureAtlas& atlas;
-	std::function <void(CardDeck&)>& onClick;
+	std::function <void(CardDeck&, Card*)>& onClick;
 };
 
 #endif
