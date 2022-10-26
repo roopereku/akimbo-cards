@@ -35,6 +35,9 @@ private:
 
 	void updateInfo(int newScore, int newMoves);
 
+	CardDeck& deck(Deck type, size_t index);
+	CardDeck& deck(size_t index);
+
 	double elapsed = 0.0;
 	int secondsElapsed = 0;
 
@@ -44,7 +47,6 @@ private:
 
 	std::function <void(CardDeck&, Card*)> onClick;
 	Overlay* overlay;
-	CardDeck* decks[13];
 
 	bool cardFits(CardDeck& deck, Card& card, bool& isSafe);
 };

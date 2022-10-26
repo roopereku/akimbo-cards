@@ -8,7 +8,7 @@ Solitaire::Solitaire(Akimbo::TextureAtlas& cardAtlas) : Game(cardAtlas)
 	setBackgroundColor(0.0f, 0.3f, 0.0f, 1.0f);
 	cardSize = Card::size() * cardAtlas.getAspectRatio();
 
-	onClick = [this](CardDeck& deck, Card* card)
+	onClick = [this](CardDeck& cardDeck, Card* card)
 	{
 		if(selectedCard && (card == selectedCard))
 		{
@@ -21,18 +21,18 @@ Solitaire::Solitaire(Akimbo::TextureAtlas& cardAtlas) : Game(cardAtlas)
 			return;
 		}
 
-		if(&deck == decks[Deal + 1])
+		if(&cardDeck == &deck(Deal, 1))
 		{
 			if(selected)
 				return;
 
-			if(decks[Deal + 1]->count() == 0)
-				decks[Deal + 0]->moveTo(*decks[Deal + 1], decks[Deal + 0]->count(), false, true);
+			if(deck(Deal, 1).count() == 0)
+				deck(Deal, 0).moveTo(deck(Deal, 1), deck(Deal, 0).count(), false, true);
 
 			else
 			{
-				size_t count = decks[Deal + 1]->count();
-				decks[Deal + 1]->moveTo(*decks[Deal + 0], dealCount > count ? count : dealCount, true, true);
+				size_t count = deck(Deal, 1).count();
+				deck(Deal, 1).moveTo(deck(Deal, 0), dealCount > count ? count : dealCount, true, true);
 			}
 
 			return;
@@ -40,32 +40,32 @@ Solitaire::Solitaire(Akimbo::TextureAtlas& cardAtlas) : Game(cardAtlas)
 
 		if(selected == nullptr)
 		{
-			if(deck.empty() || card == nullptr)
+			if(cardDeck.empty() || card == nullptr)
 				return;
 
 			if(card->flipped)
 				return;
 
 			//	Only the top card of the deal deck can be selected
-			if(&deck == decks[Deal + 0] && card != &deck.getTop())
+			if(&cardDeck == &ui[Deal + 0] && card != &cardDeck.getTop())
 				return;
 
-			selected = &deck;
+			selected = &cardDeck;
 			selectedCard = card;
 
 			selectedCard->highlighted = true;
 			selectedCard->highlight = Vec3(1.0f, 1.0f, 0.0f);
 		}
 
-		else if(&deck != decks[Deal + 0])
+		else if(&cardDeck != &deck(Deal, 0))
 		{
 			bool isSafe;
-			if(!cardFits(deck, *selectedCard, isSafe))
+			if(!cardFits(cardDeck, *selectedCard, isSafe))
 				return;
 
 			//	FIXME With 3 card deals the underlying card might disapper when 2 cards are present
 			selectedCard->highlighted = false;
-			selected->moveTo(deck, *selectedCard);
+			selected->moveTo(cardDeck, *selectedCard);
 
 			if(!selected->empty())
 			{
@@ -82,9 +82,14 @@ Solitaire::Solitaire(Akimbo::TextureAtlas& cardAtlas) : Game(cardAtlas)
 	};
 
 	Vec2 offset(0.0f, 0.0f);
-	offset.x = -(cardSize.x * 7) / 2;
 
-	decks[Safe + 0] = &ui.add <CardDeck> (
+	offset.x = -(cardSize.x * 7) / 2;
+	float leftDeckOffset = -(cardSize.x * 3.5f) / 2;
+
+
+	//	Create safes
+
+	ui.add <CardDeck> (
 		ui.left(50).then(offset.x), ui.top(offset.y),
 		ui.left(50).then(offset.x + cardSize.x), ui.top(offset.y + cardSize.y),
 		cardAtlas, Scatter::None, onClick
@@ -92,16 +97,32 @@ Solitaire::Solitaire(Akimbo::TextureAtlas& cardAtlas) : Game(cardAtlas)
 
 	for(int i = 0; i < 3; i++)
 	{
-		decks[Safe + i + 1] = &ui.add <CardDeck> (
-			decks[Safe + i]->right(), decks[Safe + i]->top(),
-			decks[Safe + i]->right(cardSize.x), decks[Safe + i]->bottom(),
+		ui.add <CardDeck> (
+			deck(Safe, i).right(), deck(Safe, i).top(),
+			deck(Safe, i).right(cardSize.x), deck(Safe, i).bottom(),
 			cardAtlas, Scatter::None, onClick
 		);
 	}
 
+	//	Create deals
+	
+	ui.add <CardDeck> (
+		ui.left(50).then(-leftDeckOffset - cardSize.x), ui.top(),
+		ui.left(50).then(-leftDeckOffset + cardSize.x / 2), ui.top(cardSize.y),
+		cardAtlas, Scatter::Horizontally, onClick
+	);
+
+	ui.add <CardDeck> (
+		ui.left(50).then(-offset.x - cardSize.x), ui.top(),
+		ui.left(50).then(-offset.x), ui.top(cardSize.y),
+		cardAtlas, Scatter::None, onClick
+	);
+
 	offset.y += cardSize.y * 1.5f;
 
-	decks[Field + 0] = &ui.add <CardDeck> (
+	//	Create fields
+
+	ui.add <CardDeck> (
 		ui.left(50).then(offset.x), ui.top(offset.y),
 		ui.left(50).then(offset.x + cardSize.x), ui.bottom(),
 		cardAtlas, Scatter::Vertically, onClick
@@ -109,35 +130,23 @@ Solitaire::Solitaire(Akimbo::TextureAtlas& cardAtlas) : Game(cardAtlas)
 
 	for(int i = 0; i < 6; i++)
 	{
-		decks[Field + i + 1] = &ui.add <CardDeck> (
-			decks[Field + i]->right(), decks[Field + i]->top(),
-			decks[Field + i]->right(cardSize.x), decks[Field + i]->bottom(),
+		ui.add <CardDeck> (
+			deck(Field, i).right(), deck(Field, i).top(),
+			deck(Field, i).right(cardSize.x), deck(Field, i).bottom(),
 			cardAtlas, Scatter::Vertically, onClick
 		);
 	}
 
-	decks[Deal + 1] = &ui.add <CardDeck> (
-		ui.left(50).then(-offset.x - cardSize.x), ui.top(),
-		ui.left(50).then(-offset.x), ui.top(cardSize.y),
-		cardAtlas, Scatter::None, onClick
-	);
-
-	offset.x = -(cardSize.x * 3.5f) / 2;
-
-	decks[Deal + 0] = &ui.add <CardDeck> (
-		ui.left(50).then(-offset.x - cardSize.x), ui.top(),
-		ui.left(50).then(-offset.x + cardSize.x / 2), ui.top(cardSize.y),
-		cardAtlas, Scatter::Horizontally, onClick
-	);
+	//	Create info fields
 
 	timerLabel = &ui.add <Akimbo::UI::Label> (
-		decks[Deal + 0]->left(), decks[Deal + 0]->bottom().then(0.03f),
-		decks[Deal + 1]->right(), decks[Field + 0]->top()
+		deck(Deal, 0).left(), deck(Deal, 0).bottom().then(0.03f),
+		deck(Deal, 1).right(), deck(Field, 0).top()
 	);
 
 	auto& info = ui.add <Akimbo::UI::Container> (
-		decks[Safe + 0]->left(), timerLabel->top(),
-		decks[Safe + 3]->right(), timerLabel->bottom()
+		deck(Safe, 0).left(), timerLabel->top(),
+		deck(Safe, 3).right(), timerLabel->bottom()
 	);
 
 	scoreLabel = &info.add <Akimbo::UI::Label> (
@@ -163,7 +172,7 @@ Solitaire::Solitaire(Akimbo::TextureAtlas& cardAtlas) : Game(cardAtlas)
 	addOption("3-card deals", [this](bool threeCard)
 	{
 		dealCount = threeCard ? 3 : 1;
-		decks[Deal + 0]->limitHorizontalVisibility(dealCount);
+		deck(Deal, 0).limitHorizontalVisibility(dealCount);
 		restart(false);
 	});
 
@@ -198,12 +207,13 @@ void Solitaire::restart(bool first)
 		{
 			for(int v = Card::Name::Ace; v <= Card::Name::King; v++)
 			{
-				decks[Deal + 1]->add(static_cast <Card::Type> (t), v);
-				decks[Deal + 1]->getTop().flipped = true;
+				deck(Deal, 1).add(static_cast <Card::Type> (t), v);
+				deck(Deal, 1).getTop().flipped = true;
 			}
 		}
 
-		decks[Deal + 1]->toggleCount();
+		deck(Deal, 0).limitHorizontalVisibility(dealCount);
+		deck(Deal, 1).toggleCount();
 	}
 
 	else
@@ -213,17 +223,17 @@ void Solitaire::restart(bool first)
 			if(i == Deal + 1)
 				continue;
 
-			decks[i]->moveTo(*decks[Deal + 1], decks[i]->count());
+			deck(i).moveTo(deck(Deal, 1), deck(i).count());
 		}
 
-		decks[Deal + 1]->flipAll(true);
+		deck(Deal, 1).flipAll(true);
 	}
 
-	decks[Deal + 1]->shuffle();
+	deck(Deal, 1).shuffle();
 	for(size_t i = 0; i < 7; i++)
 	{
-		decks[Deal + 1]->getTop().flipped = false;
-		decks[Deal + 1]->moveTo(*decks[Field + i], i + 1, true, false);
+		deck(Deal, 1).getTop().flipped = false;
+		deck(Deal, 1).moveTo(deck(Field, i), i + 1, true, false);
 	}
 
 	elapsed = 0.0;
@@ -241,8 +251,6 @@ void Solitaire::restart(bool first)
 		movesLabel->setText("");
 		scoreLabel->setText("");
 	}
-
-	DBG_LOG("%d", dealCount);
 }
 
 void Solitaire::update(double delta)
@@ -286,28 +294,38 @@ void Solitaire::update(double delta)
 	}
 }
 
-bool Solitaire::cardFits(CardDeck& deck, Card& card, bool& isSafe)
+CardDeck& Solitaire::deck(Deck type, size_t index)
+{
+	return ui.get <CardDeck> (type + index);
+}
+
+CardDeck& Solitaire::deck(size_t index)
+{
+	return ui.get <CardDeck> (index);
+}
+
+bool Solitaire::cardFits(CardDeck& cardDeck, Card& card, bool& isSafe)
 {
 	int safe = 0;
 	for(size_t i = Safe + 0; i < Safe + 4; i++)
-		safe += &deck == decks[i];
+		safe += &cardDeck == &deck(i);
 
 	if(safe)
 	{
 		isSafe = true;
-		if(deck.empty())
+		if(cardDeck.empty())
 			return card.value == Card::Name::Ace;
 
-		return card.t == deck.getTop().t && card.value == deck.getTop().value + 1;
+		return card.t == cardDeck.getTop().t && card.value == cardDeck.getTop().value + 1;
 	}
 
 	else
 	{
 		isSafe = false;
-		if(deck.empty())
+		if(cardDeck.empty())
 			return card.value == Card::Name::King;
 
-		bool sameColor = card.isRed() == deck.getTop().isRed();
-		return !sameColor && card.value == deck.getTop().value - 1;
+		bool sameColor = card.isRed() == cardDeck.getTop().isRed();
+		return !sameColor && card.value == cardDeck.getTop().value - 1;
 	}
 }
