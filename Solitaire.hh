@@ -30,18 +30,23 @@ private:
 	Akimbo::UI::Label* movesLabel;
 	Akimbo::UI::Label* scoreLabel;
 
+	int score = -1;
+	int moves = -1;
+
+	void updateInfo(int newScore, int newMoves);
+
 	double elapsed = 0.0;
 	int secondsElapsed = 0;
 
 	Vec2 cardSize;
-	unsigned dealCount;
+	unsigned dealCount = 1;
 	bool keepScore = true;
 
 	std::function <void(CardDeck&, Card*)> onClick;
 	Overlay* overlay;
 	CardDeck* decks[13];
 
-	bool cardFits(CardDeck& deck, Card& card);
+	bool cardFits(CardDeck& deck, Card& card, bool& isSafe);
 };
 
 #endif

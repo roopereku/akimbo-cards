@@ -7,7 +7,6 @@ Solitaire::Solitaire(Akimbo::TextureAtlas& cardAtlas) : Game(cardAtlas)
 {
 	setBackgroundColor(0.0f, 0.3f, 0.0f, 1.0f);
 	cardSize = Card::size() * cardAtlas.getAspectRatio();
-	dealCount = 1;
 
 	onClick = [this](CardDeck& deck, Card* card)
 	{
@@ -47,8 +46,8 @@ Solitaire::Solitaire(Akimbo::TextureAtlas& cardAtlas) : Game(cardAtlas)
 			if(card->flipped)
 				return;
 
-			//	Only the last card of the deal deck can be selected
-			if(&deck == decks[Deal + 0] && card != &deck.back())
+			//	Only the top card of the deal deck can be selected
+			if(&deck == decks[Deal + 0] && card != &deck.getTop())
 				return;
 
 			selected = &deck;
@@ -60,17 +59,22 @@ Solitaire::Solitaire(Akimbo::TextureAtlas& cardAtlas) : Game(cardAtlas)
 
 		else if(&deck != decks[Deal + 0])
 		{
-			if(!cardFits(deck, *selectedCard))
+			bool isSafe;
+			if(!cardFits(deck, *selectedCard, isSafe))
 				return;
 
+			//	FIXME With 3 card deals the underlying card might disapper when 2 cards are present
 			selectedCard->highlighted = false;
 			selected->moveTo(deck, *selectedCard);
 
 			if(!selected->empty())
 			{
-				selected->back().flipped = false;
+				selected->getTop().flipped = false;
 				selected->render();
 			}
+
+			if(keepScore)
+				updateInfo(score + 5 * (isSafe + 1), moves);
 
 			selectedCard = nullptr;
 			selected = nullptr;
@@ -158,6 +162,9 @@ Solitaire::Solitaire(Akimbo::TextureAtlas& cardAtlas) : Game(cardAtlas)
 
 	addOption("3-card deals", [this](bool threeCard)
 	{
+		dealCount = threeCard ? 3 : 1;
+		decks[Deal + 0]->limitHorizontalVisibility(dealCount);
+		restart(false);
 	});
 
 	addOption("relax mode", [this](bool on)
@@ -165,6 +172,22 @@ Solitaire::Solitaire(Akimbo::TextureAtlas& cardAtlas) : Game(cardAtlas)
 		keepScore = !on;
 		restart(false);
 	});
+}
+
+void Solitaire::updateInfo(int newScore, int newMoves)
+{
+	if(newScore != score)
+	{
+		score = newScore;
+		if(score < 0) score = 0;
+		scoreLabel->setText("Score: " + std::to_string(score));
+	}
+
+	if(newMoves != moves)
+	{
+		moves = newMoves;
+		movesLabel->setText("Moves: " + std::to_string(moves));
+	}
 }
 
 void Solitaire::restart(bool first)
@@ -176,12 +199,11 @@ void Solitaire::restart(bool first)
 			for(int v = Card::Name::Ace; v <= Card::Name::King; v++)
 			{
 				decks[Deal + 1]->add(static_cast <Card::Type> (t), v);
-				decks[Deal + 1]->back().flipped = true;
+				decks[Deal + 1]->getTop().flipped = true;
 			}
 		}
 
 		decks[Deal + 1]->toggleCount();
-		decks[Deal + 0]->limitVisible(dealCount);
 	}
 
 	else
@@ -200,16 +222,27 @@ void Solitaire::restart(bool first)
 	decks[Deal + 1]->shuffle();
 	for(size_t i = 0; i < 7; i++)
 	{
-		decks[Deal + 1]->back().flipped = false;
+		decks[Deal + 1]->getTop().flipped = false;
 		decks[Deal + 1]->moveTo(*decks[Field + i], i + 1, true, false);
 	}
 
 	elapsed = 0.0;
 	secondsElapsed = 0;
 
-	timerLabel->setText("");
-	movesLabel->setText("");
-	scoreLabel->setText("");
+	if(keepScore)
+	{
+		timerLabel->setText("00:00:00");
+		updateInfo(0, 0);
+	}
+
+	else
+	{
+		timerLabel->setText("");
+		movesLabel->setText("");
+		scoreLabel->setText("");
+	}
+
+	DBG_LOG("%d", dealCount);
 }
 
 void Solitaire::update(double delta)
@@ -226,6 +259,10 @@ void Solitaire::update(double delta)
 		int seconds = secondsElapsed;
 		int minutes = 0;
 		int hours = 0;
+
+		//	Decrement score every 10 seconds
+		if(seconds % 10 == 0)
+			updateInfo(score - 2, moves);
 
 		if(seconds >= 60)
 		{
@@ -246,12 +283,10 @@ void Solitaire::update(double delta)
 			<< std::setw(2) << seconds;
 
 		timerLabel->setText(ss.str());
-		scoreLabel->setText("Score: 3218");
-		movesLabel->setText("Moves: 169");
 	}
 }
 
-bool Solitaire::cardFits(CardDeck& deck, Card& card)
+bool Solitaire::cardFits(CardDeck& deck, Card& card, bool& isSafe)
 {
 	int safe = 0;
 	for(size_t i = Safe + 0; i < Safe + 4; i++)
@@ -259,18 +294,20 @@ bool Solitaire::cardFits(CardDeck& deck, Card& card)
 
 	if(safe)
 	{
+		isSafe = true;
 		if(deck.empty())
 			return card.value == Card::Name::Ace;
 
-		return card.t == deck.back().t && card.value == deck.back().value + 1;
+		return card.t == deck.getTop().t && card.value == deck.getTop().value + 1;
 	}
 
 	else
 	{
+		isSafe = false;
 		if(deck.empty())
 			return card.value == Card::Name::King;
 
-		bool sameColor = card.isRed() == deck.back().isRed();
-		return !sameColor && card.value == deck.back().value - 1;
+		bool sameColor = card.isRed() == deck.getTop().isRed();
+		return !sameColor && card.value == deck.getTop().value - 1;
 	}
 }
