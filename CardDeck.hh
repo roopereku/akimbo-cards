@@ -34,8 +34,10 @@ public:
 	void toggleCount();
 	void limitVisible(unsigned count);
 
-	void moveTo(CardDeck& to, Card& card, bool top = true, bool flip = false);
-	void moveTo(CardDeck& to, size_t count, bool top = true, bool flip = false);
+	size_t moveTo(CardDeck& to, Card& card, bool top = true, bool flip = false);
+	size_t moveTo(CardDeck& to, size_t count, bool top = true, bool flip = false);
+
+	void flipAll(bool flipped);
 
 	void add(Card::Type t, unsigned value, bool top = true);
 	void add(Card card, bool top = true);

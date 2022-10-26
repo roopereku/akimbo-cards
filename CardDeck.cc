@@ -42,7 +42,7 @@ void CardDeck::onResize()
 			cardSize.x = fill.x;
 			cardSize.y = fill.x / atlas.getAspectRatio().x;
 
-			shift = Vec2(0.0f, cardSize.y / 3.0f);
+			shift = Vec2(0.0f, cardSize.y / 4);
 		break;
 
 		case Scatter::Horizontally:
@@ -112,16 +112,24 @@ void CardDeck::pop()
 	render();
 }
 
-void CardDeck::moveTo(CardDeck& to, size_t count, bool top, bool flip)
+size_t CardDeck::moveTo(CardDeck& to, size_t count, bool top, bool flip)
 {
+	if(count > cards.size())
+		count = cards.size();
+
+	if(count == 0)
+		return 0;
+
 	Card& card = cards[cards.size() - count];
-	moveTo(to, card, top, flip);
+	return moveTo(to, card, top, flip);
 }
 
-void CardDeck::moveTo(CardDeck& to, Card& card, bool top, bool flip)
+size_t CardDeck::moveTo(CardDeck& to, Card& card, bool top, bool flip)
 {
 	auto it = std::find(cards.begin(), cards.end(), card);
+
 	size_t index = std::distance(cards.begin(), it);
+	size_t count = cards.size() - index;
 
 	for(size_t i = index; i < cards.size(); i++)
 	{
@@ -132,12 +140,22 @@ void CardDeck::moveTo(CardDeck& to, Card& card, bool top, bool flip)
 	cards.erase(cards.begin() + index, cards.end());
 	to.render();
 	render();
+
+	return count;
 }
 
 void CardDeck::add(Card card, bool top)
 {
 	if(top) cards.push_back(card);
 	else cards.push_front(card);
+
+	render();
+}
+
+void CardDeck::flipAll(bool flipped)
+{
+	for(auto& c : cards)
+		c.flipped = flipped;
 
 	render();
 }
