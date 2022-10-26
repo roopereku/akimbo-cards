@@ -8,8 +8,10 @@ Solitaire::Solitaire(Akimbo::TextureAtlas& cardAtlas) : Game(cardAtlas)
 	setBackgroundColor(0.0f, 0.3f, 0.0f, 1.0f);
 	cardSize = Card::size() * cardAtlas.getAspectRatio();
 
+	//	Callback function that's called when any card deck is clicked
 	onClick = [this](CardDeck& cardDeck, Card* card)
 	{
+		//	Unhighlight if the user clicks the selected card
 		if(selectedCard && (card == selectedCard))
 		{
 			selectedCard->highlighted = false;
@@ -21,16 +23,20 @@ Solitaire::Solitaire(Akimbo::TextureAtlas& cardAtlas) : Game(cardAtlas)
 			return;
 		}
 
+		//	Did the user click on the rightmost deal deck
 		if(&cardDeck == &deck(Deal, 1))
 		{
+			//	Don't request new cards if one is selected
 			if(selected)
 				return;
 
-			if(deck(Deal, 1).count() == 0)
+			//	If the rightmost deal deck is empty, fill it with cards of the leftmost deal deck
+			if(deck(Deal, 1).empty())
 				deck(Deal, 0).moveTo(deck(Deal, 1), deck(Deal, 0).count(), false, true);
 
 			else
 			{
+				//	Move 1 or 3 cards from the rightmost deal deck to the leftmost deal deck
 				size_t count = deck(Deal, 1).count();
 				deck(Deal, 1).moveTo(deck(Deal, 0), dealCount > count ? count : dealCount, true, true);
 			}
@@ -38,11 +44,14 @@ Solitaire::Solitaire(Akimbo::TextureAtlas& cardAtlas) : Game(cardAtlas)
 			return;
 		}
 
+		//	No card is selected so try to select one
 		if(selected == nullptr)
 		{
+			//	The clicked deck is empty or no card was clicked
 			if(cardDeck.empty() || card == nullptr)
 				return;
 
+			//	Flipped cards can't be selected
 			if(card->flipped)
 				return;
 
@@ -57,22 +66,28 @@ Solitaire::Solitaire(Akimbo::TextureAtlas& cardAtlas) : Game(cardAtlas)
 			selectedCard->highlight = Vec3(1.0f, 1.0f, 0.0f);
 		}
 
+		//	Is there a selected card and did the user click one of the safes or fields
 		else if(&cardDeck != &deck(Deal, 0))
 		{
+			//	The selected card has to fit on the clicked deck
 			bool isSafe;
 			if(!cardFits(cardDeck, *selectedCard, isSafe))
 				return;
 
 			//	FIXME With 3 card deals the underlying card might disapper when 2 cards are present
+
+			//	Move the selected card (and the ones above it) to the clicked deck
 			selectedCard->highlighted = false;
 			selected->moveTo(cardDeck, *selectedCard);
 
+			//	If the deck that we moved stuff from isn't empty, flip the top card
 			if(!selected->empty())
 			{
 				selected->getTop().flipped = false;
 				selected->render();
 			}
 
+			//	Update score
 			if(keepScore)
 				updateInfo(score + 5 * (isSafe + 1), moves);
 
