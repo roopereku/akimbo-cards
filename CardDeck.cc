@@ -43,6 +43,7 @@ void CardDeck::onResize()
 			cardSize.y = fill.x / atlas.getAspectRatio().x;
 
 			shift = Vec2(0.0f, cardSize.y / 4);
+			fitVertically();
 		break;
 
 		case Scatter::Horizontally:
@@ -72,7 +73,9 @@ void CardDeck::onRender(Akimbo::Render& render)
 	if(displayCount > 0)
 	{
 		std::string c = std::to_string(cards.size());
-		render.text(c, core->getDefaultFont(), view.topLeft, view.radius * Vec2(1, 0.5f));
+		Vec2 textSize = view.radius * Vec2(1, 0.5f);
+
+		render.centerText(c, core->getDefaultFont(), view.topLeft + view.radius * 2.0f - textSize, textSize);
 	}
 }
 
@@ -144,11 +147,25 @@ size_t CardDeck::moveTo(CardDeck& to, Card& card, bool top, bool flip)
 	return count;
 }
 
+void CardDeck::fitVertically()
+{
+	if(scatter == Scatter::Vertically)
+	{
+		float overflow = shift.y * cards.size() + cardSize.y;
+		if(-1.0f + overflow >= 1.0f)
+		{
+			float relation = overflow / 2.0f;
+			shift.y /= relation;
+		}
+	}
+}
+
 void CardDeck::add(Card card, bool top)
 {
 	if(top) cards.push_back(card);
 	else cards.push_front(card);
 
+	fitVertically();
 	render();
 }
 
@@ -166,7 +183,7 @@ void CardDeck::toggleCount()
 	render();
 }
 
-void CardDeck::limitVisible(unsigned count)
+void CardDeck::limitHorizontalVisibility(unsigned count)
 {
 	maxVisible = count;
 	render();

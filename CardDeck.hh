@@ -32,7 +32,7 @@ public:
 	void onResize() override;
 
 	void toggleCount();
-	void limitVisible(unsigned count);
+	void limitHorizontalVisibility(unsigned count);
 
 	size_t moveTo(CardDeck& to, Card& card, bool top = true, bool flip = false);
 	size_t moveTo(CardDeck& to, size_t count, bool top = true, bool flip = false);
@@ -48,10 +48,10 @@ public:
 	bool empty() { return cards.empty(); }
 	size_t count() { return cards.size(); }
 
-	Card& front() { return cards.front(); }
-	Card& back() { return cards.back(); }
+	Card& getTop() { return cards.back(); }
 
 private:
+	void fitVertically();
 	void renderCard(Akimbo::Render& render, Card& card, Vec2 position);
 
 	Vec2 cardSize;
