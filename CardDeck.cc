@@ -123,17 +123,7 @@ size_t CardDeck::moveTo(CardDeck& to, size_t count, bool top, bool flip)
 	if(count == 0)
 		return 0;
 
-	Card& card = cards[cards.size() - count];
-	return moveTo(to, card, top, flip);
-}
-
-size_t CardDeck::moveTo(CardDeck& to, Card& card, bool top, bool flip)
-{
-	auto it = std::find(cards.begin(), cards.end(), card);
-
-	size_t index = std::distance(cards.begin(), it);
-	size_t count = cards.size() - index;
-
+	size_t index = cards.size() - count;
 	for(size_t i = index; i < cards.size(); i++)
 	{
 		if(flip) cards[i].flipped = !cards[i].flipped;
@@ -145,6 +135,23 @@ size_t CardDeck::moveTo(CardDeck& to, Card& card, bool top, bool flip)
 	render();
 
 	return count;
+}
+
+size_t CardDeck::moveTo(CardDeck& to, Card& card, bool top, bool flip)
+{
+	/*	FIXME There's probably a better and faster
+	 *	way to find the card in cards using addresses */
+	for(size_t i = 0; i < cards.size(); i++)
+	{
+		//	Is the given cards is found in cards
+		if(&cards[i] == &card)
+		{
+			size_t count = cards.size() - i;
+			return moveTo(to, count, top, flip);
+		}
+	}
+
+	return 0;
 }
 
 void CardDeck::fitVertically()
