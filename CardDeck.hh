@@ -47,6 +47,7 @@ public:
 
 	bool empty() { return cards.empty(); }
 	size_t count() { return cards.size(); }
+	Card& operator[](size_t index) { return cards[index]; }
 
 	Card& getTop() { return cards.back(); }
 
