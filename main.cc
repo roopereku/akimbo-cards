@@ -1,3 +1,4 @@
+#include "BlackJack.hh"
 #include "Solitaire.hh"
 #include "CardDeck.hh"
 #include "Overlay.hh"
@@ -9,8 +10,9 @@ class Cards : public Akimbo::Core
 {
 public:
 	Cards()
-		: cardAtlas("resources/cardatlas.jpg", 13, 5),
-		  game(ui.add <Solitaire> (
+		: f(setDefault()),
+		  cardAtlas("resources/cardatlas.jpg", 13, 5),
+		  game(ui.add <BlackJack> (
 				ui.left(), ui.top(),
 				ui.right(), ui.bottom(),
 				cardAtlas
@@ -30,6 +32,13 @@ public:
 	}
 
 private:
+	Akimbo::Font& f;
+	Akimbo::Font& setDefault()
+	{
+		Akimbo::Font& f = loadFont("/usr/share/fonts/TTF/FiraCode-Medium.ttf");
+		setDefaultFont(f);
+		return f;
+	}
 	Akimbo::TextureAtlas cardAtlas;
 	Game& game;
 };
