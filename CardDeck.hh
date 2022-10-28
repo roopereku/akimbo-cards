@@ -34,8 +34,8 @@ public:
 	void toggleCount();
 	void limitHorizontalVisibility(unsigned count);
 
-	size_t moveTo(CardDeck& to, Card& card, bool top = true, bool flip = false);
-	size_t moveTo(CardDeck& to, size_t count, bool top = true, bool flip = false);
+	size_t moveTo(CardDeck& to, Card& card, bool top = true, bool flip = false, bool inverse = false);
+	size_t moveTo(CardDeck& to, size_t count, bool top = true, bool flip = false, bool inverse = false);
 
 	void flipAll(bool flipped);
 

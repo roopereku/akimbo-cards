@@ -115,7 +115,7 @@ void CardDeck::pop()
 	render();
 }
 
-size_t CardDeck::moveTo(CardDeck& to, size_t count, bool top, bool flip)
+size_t CardDeck::moveTo(CardDeck& to, size_t count, bool top, bool flip, bool inverse)
 {
 	if(count > cards.size())
 		count = cards.size();
@@ -123,11 +123,24 @@ size_t CardDeck::moveTo(CardDeck& to, size_t count, bool top, bool flip)
 	if(count == 0)
 		return 0;
 
-	size_t index = cards.size() - count;
-	for(size_t i = index; i < cards.size(); i++)
+	int index = cards.size() - count;
+
+	if(!inverse)
 	{
-		if(flip) cards[i].flipped = !cards[i].flipped;
-		to.add(cards[i], top);
+		for(int i = cards.size() - 1; i >= index; i--)
+		{
+			if(flip) cards[i].flipped = !cards[i].flipped;
+			to.add(cards[i], top);
+		}
+	}
+
+	else
+	{
+		for(int i = index; i < cards.size(); i++)
+		{
+			if(flip) cards[i].flipped = !cards[i].flipped;
+			to.add(cards[i], top);
+		}
 	}
 
 	cards.erase(cards.begin() + index, cards.end());
@@ -137,7 +150,7 @@ size_t CardDeck::moveTo(CardDeck& to, size_t count, bool top, bool flip)
 	return count;
 }
 
-size_t CardDeck::moveTo(CardDeck& to, Card& card, bool top, bool flip)
+size_t CardDeck::moveTo(CardDeck& to, Card& card, bool top, bool flip, bool inverse)
 {
 	/*	FIXME There's probably a better and faster
 	 *	way to find the card in cards using addresses */
@@ -147,7 +160,7 @@ size_t CardDeck::moveTo(CardDeck& to, Card& card, bool top, bool flip)
 		if(&cards[i] == &card)
 		{
 			size_t count = cards.size() - i;
-			return moveTo(to, count, top, flip);
+			return moveTo(to, count, top, flip, inverse);
 		}
 	}
 

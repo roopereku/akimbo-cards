@@ -32,7 +32,7 @@ Solitaire::Solitaire(Akimbo::TextureAtlas& cardAtlas) : Game(cardAtlas)
 
 			//	If the rightmost deal deck is empty, fill it with cards of the leftmost deal deck
 			if(deck(Deal, 1).empty())
-				deck(Deal, 0).moveTo(deck(Deal, 1), deck(Deal, 0).count(), false, true);
+				deck(Deal, 0).moveTo(deck(Deal, 1), deck(Deal, 0).count(), true, true);
 
 			else
 			{
@@ -78,7 +78,7 @@ Solitaire::Solitaire(Akimbo::TextureAtlas& cardAtlas) : Game(cardAtlas)
 
 			//	Move the selected card (and the ones above it) to the clicked deck
 			selectedCard->highlighted = false;
-			selected->moveTo(cardDeck, *selectedCard);
+			selected->moveTo(cardDeck, *selectedCard, true, false, true);
 
 			//	If the deck that we moved stuff from isn't empty, flip the top card
 			if(!selected->empty())
@@ -247,8 +247,9 @@ void Solitaire::restart(bool first)
 	deck(Deal, 1).shuffle();
 	for(size_t i = 0; i < 7; i++)
 	{
-		deck(Deal, 1).getTop().flipped = false;
 		deck(Deal, 1).moveTo(deck(Field, i), i + 1, true, false);
+		deck(Field, i).getTop().flipped = false;
+		deck(Field, i).render();
 	}
 
 	elapsed = 0.0;
