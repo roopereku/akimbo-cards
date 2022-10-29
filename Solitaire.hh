@@ -39,6 +39,7 @@ private:
 	CardDeck& deck(size_t index);
 
 	double elapsed = 0.0;
+	double animationDuration = 0.2;
 	int secondsElapsed = 0;
 
 	Vec2 cardSize;

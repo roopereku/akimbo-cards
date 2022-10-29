@@ -109,9 +109,9 @@ void CardDeck::shuffle()
 	render();
 }
 
-void CardDeck::pop()
+void CardDeck::pop(size_t dive)
 {
-	cards.pop_back();
+	cards.erase(cards.end() - 1 - dive);
 	render();
 }
 
@@ -152,16 +152,11 @@ size_t CardDeck::moveTo(CardDeck& to, size_t count, bool top, bool flip, bool in
 
 size_t CardDeck::moveTo(CardDeck& to, Card& card, bool top, bool flip, bool inverse)
 {
-	/*	FIXME There's probably a better and faster
-	 *	way to find the card in cards using addresses */
-	for(size_t i = 0; i < cards.size(); i++)
+	size_t index = getCardIndex(card);
+	if(index < cards.size())
 	{
-		//	Is the given cards is found in cards
-		if(&cards[i] == &card)
-		{
-			size_t count = cards.size() - i;
-			return moveTo(to, count, top, flip, inverse);
-		}
+		size_t count = cards.size() - index;
+		return moveTo(to, count, top, flip, inverse);
 	}
 
 	return 0;
@@ -197,6 +192,18 @@ void CardDeck::flipAll(bool flipped)
 	render();
 }
 
+Vec2 CardDeck::getTopPosition()
+{
+	//	FIXME check for horizontal scatter and visibility limit
+	Vec2 result = view.topLeft;
+	DBG_LOG("%lu cards", count());
+
+	for(int i = 0; i < (int)cards.size() - 1; i++)
+		result += shift;
+
+	return result;
+}
+
 void CardDeck::toggleCount()
 {
 	displayCount = !displayCount;
@@ -207,6 +214,22 @@ void CardDeck::limitHorizontalVisibility(unsigned count)
 {
 	maxVisible = count;
 	render();
+}
+
+size_t CardDeck::getCardIndex(Card& card)
+{
+	/*	FIXME There's probably a better and faster
+	 *	way to find the card in cards using addresses */
+
+	size_t i;
+	for(i = 0; i < cards.size(); i++)
+	{
+		//	Is the given card is found in cards
+		if(&cards[i] == &card)
+			break;
+	}
+
+	return i;
 }
 
 void CardDeck::add(Card::Type t, unsigned value, bool top)

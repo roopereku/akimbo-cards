@@ -78,7 +78,9 @@ Solitaire::Solitaire(Akimbo::TextureAtlas& cardAtlas) : Game(cardAtlas)
 
 			//	Move the selected card (and the ones above it) to the clicked deck
 			selectedCard->highlighted = false;
-			selected->moveTo(cardDeck, *selectedCard, true, false, true);
+			//selected->moveTo(cardDeck, *selectedCard, true, false, true);
+
+			overlay->animateCard(*selected, cardDeck, *selectedCard, animationDuration, true);
 
 			//	If the deck that we moved stuff from isn't empty, flip the top card
 			if(!selected->empty())
@@ -181,7 +183,8 @@ Solitaire::Solitaire(Akimbo::TextureAtlas& cardAtlas) : Game(cardAtlas)
 
 	overlay = &ui.add <Overlay> (
 		ui.left(), ui.top(),
-		ui.right(), ui.bottom()
+		ui.right(), ui.bottom(),
+		cardAtlas
 	);
 
 	addOption("3-card deals", [this](bool threeCard)
@@ -254,6 +257,12 @@ void Solitaire::restart(bool first)
 
 	elapsed = 0.0;
 	secondsElapsed = 0;
+
+	if(selectedCard)
+		selectedCard->highlighted = false;
+
+	selected = nullptr;
+	selectedCard = nullptr;
 
 	if(keepScore)
 	{
@@ -328,6 +337,8 @@ bool Solitaire::cardFits(CardDeck& cardDeck, Card& card, bool& isSafe)
 
 	if(safe)
 	{
+		//	FIXME Don't allow cards that aren't at the top of their deck
+
 		isSafe = true;
 		if(cardDeck.empty())
 			return card.value == Card::Name::Ace;

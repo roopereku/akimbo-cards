@@ -43,13 +43,16 @@ public:
 	void add(Card card, bool top = true);
 
 	void shuffle();
-	void pop();
+	void pop(size_t dive = 0);
 
 	bool empty() { return cards.empty(); }
 	size_t count() { return cards.size(); }
+
+	size_t getCardIndex(Card& card);
 	Card& operator[](size_t index) { return cards[index]; }
 
-	Card& getTop() { return cards.back(); }
+	Card& getTop(size_t dive = 0) { return cards[cards.size() - 1 - dive]; }
+	Vec2 getTopPosition();
 
 private:
 	void fitVertically();
