@@ -38,6 +38,7 @@ public:
 	size_t moveTo(CardDeck& to, size_t count, bool top = true, bool flip = false, bool inverse = false);
 
 	void flipAll(bool flipped);
+	void flipCard(size_t index, bool flipped);
 
 	void add(Card::Type t, unsigned value, bool top = true);
 	void add(Card card, bool top = true);

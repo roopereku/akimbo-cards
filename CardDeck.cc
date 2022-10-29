@@ -192,6 +192,12 @@ void CardDeck::flipAll(bool flipped)
 	render();
 }
 
+void CardDeck::flipCard(size_t index, bool flipped)
+{
+	cards[index].flipped = flipped;
+	render();
+}
+
 Vec2 CardDeck::getTopPosition()
 {
 	//	FIXME check for horizontal scatter and visibility limit
