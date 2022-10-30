@@ -10,9 +10,8 @@ class Cards : public Akimbo::Core
 {
 public:
 	Cards()
-		: f(setDefault()),
-		  cardAtlas("resources/cardatlas.jpg", 13, 5),
-		  game(ui.add <BlackJack> (
+		: cardAtlas("resources/cardatlas.jpg", 13, 5),
+		  game(ui.add <Solitaire> (
 				ui.left(), ui.top(),
 				ui.right(), ui.bottom(),
 				cardAtlas
@@ -32,13 +31,6 @@ public:
 	}
 
 private:
-	Akimbo::Font& f;
-	Akimbo::Font& setDefault()
-	{
-		Akimbo::Font& f = loadFont("/usr/share/fonts/TTF/FiraCode-Medium.ttf");
-		setDefaultFont(f);
-		return f;
-	}
 	Akimbo::TextureAtlas cardAtlas;
 	Game& game;
 };
