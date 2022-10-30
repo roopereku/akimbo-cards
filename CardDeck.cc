@@ -200,11 +200,10 @@ void CardDeck::flipCard(size_t index, bool flipped)
 
 Vec2 CardDeck::getTopPosition()
 {
-	//	FIXME check for horizontal scatter and visibility limit
 	Vec2 result = view.topLeft;
-	DBG_LOG("%lu cards", count());
+	size_t start = maxVisible == 0 ? 0 : cards.size() - maxVisible;
 
-	for(int i = 0; i < (int)cards.size() - 1; i++)
+	for(size_t i = start; i < cards.size(); i++)
 		result += shift;
 
 	return result;
